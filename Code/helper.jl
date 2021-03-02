@@ -13,39 +13,51 @@ using DataStructures
 
 
 # Define useful structs here
+struct Street
+    id::Int # strictly internal
+    start::Int
+    finish::Int
+    name::String
+    L::Int
+    cq::Queue{Tuple{Int, Int}}
+end
+
+# Street(args...) = Street2(args...)
 
 struct Intersection
-    id
-    instreets
-    outstreets
+    id::Int
+    instreets::Vector{Int}
+    outstreets::Vector{Int}    
 end
 
-struct Street
-    start
-    finish
-    name
-    L
-end
+# Intersection(args...) = Intersection2(args...)
+
 
 struct Car
-    num_streets
-    streets
+    id::Int 
+    num_streets::Int
+    streets::Vector{Int}
 end
 
-struct CarQueue
-    intersection
-    street
-    numcars
-    carqueue::Queue{Tuple{Int, Car}}
-    incoming
+
+struct Problem
+    cars::Vector{Car}
+    intersections::Vector{Intersection}
+    streets::Vector{Street}
+    D::Int
+    I::Int
+    S::Int
+    V::Int
+    F::Int
 end
 
-struct Schedule
-    id # id of intersection
-    numstreets # number of streets handled
-    streetorders # array of streets giving order of visit
-    streetdurations # array of integers giving timing of green
-end
+
+# struct Schedule
+#     id # id of intersection
+#     numstreets # number of streets handled
+#     streetorders # array of streets giving order of visit
+#     streetdurations # array of integers giving timing of green
+# end
 
 
 
@@ -78,43 +90,49 @@ function details_p(partfile)
 end
 
 function parse_input(inputfile)
-    intersections, streets, cars, carqueues, D, I, S, V, F = open("Inputs/$(inputfile)") do f
+    prob = open("Inputs/$(inputfile)") do f
         D,I,S,V,F = parse.(Int, split(readline(f)," "))
-        streets = Dict{String, Street}()
-        intersections = Dict{Int, Intersection}()
-        instreets = Dict{Int, Set{Street}}(i => Set{Street}() for i in 0:(I-1))
-        outstreets = Dict{Int, Set{Street}}(i => Set{Street}() for i in 0:(I-1))
+        streetdict = Dict{String,Int}()
+        streets = Vector{Street}(undef, S)        
+        intersections = Vector{Intersection}(undef, I)
+        instreets = Vector{Vector{Int}}(undef, I)
+        outstreets = Vector{Vector{Int}}(undef, I)  
+        for i in 1:I
+            instreets[i] = Vector{Int}()
+            outstreets[i] = Vector{Int}()
+        end    
+        cars = Vector{Car}(undef,V)  
         for s in 1:S
             d = split(readline(f), " ")
-            b = parse(Int, d[1])
-            e = parse(Int, d[2])
+            b = parse(Int, d[1])+1
+            e = parse(Int, d[2])+1
             n = string(d[3])
             l = parse(Int, d[4])
-            street = Street(b,e,n,l)
-            streets[n] = street
-            push!(instreets[e], street)
-            push!(outstreets[b], street)
+            q = Queue{Tuple{Int,Int}}()
+            street = Street(s,b,e,n,l,q)
+            streetdict[n] = s
+            streets[s] = street
+            push!(instreets[e], s)
+            push!(outstreets[b], s)
         end
-        cars = Car[]
+        for i in 1:I 
+            intersection = Intersection(i,instreets[i], outstreets[i])
+            intersections[i] = intersection    
+        end        
         for v in 1:V
             d = split(readline(f), " ")
             p = parse(Int, d[1])
             streetnames = d[2:p]
-            path = [streets[s] for s in streetnames]
-            c = Car(p, path)
-            push!(cars, c)
+            path = [streetdict[s] for s in streetnames]
+            c = Car(v, p, path)
+            cars[v] = c
         end
-        intersections = Dict{Int, Intersection}(i => Intersection(i, instreets[i], outstreets[i]) for i in 0:(I-1))
-        carqueues = Dict{Tuple{Int, String}, CarQueue}()
-        for (i,intersection) in intersections
-            for street in intersection.instreets
-                q = CarQueue(intersection, street, 0, Queue{Tuple{Int,Car}}(), Dict{Int, Car}())
-                carqueues[(intersection.id, street.name)] =  q
-            end
-        end
-        return intersections, streets, cars, carqueues, D, I, S, V, F
+
+        prob = Problem(cars, intersections,streets,D,I,S,V,F)
+        
+        return prob
     end
-    return intersections, streets, cars, carqueues, D, I, S, V, F
+    return prob
 end
 
 

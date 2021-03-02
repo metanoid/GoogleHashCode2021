@@ -1,13 +1,13 @@
 using DataStructures
 
 struct Event
-    time
-    car
-    intersection
-    carqueue
+    time::Int # time of this event happening
+    car::Int # 
+    intersection::Int # the upcoming intersection (the intersection the car has not yet crossed)
+    streetposid::Int # which increment of the car's streets do we want to visit next
 end
 
-function simulate(intersections, streets, cars, carqueues, schedules, D, F)
+function simulate(prob)
     # given a schedule, get the total score
     eventQ = PriorityQueue{Event, Int}()
     # add the cars crossing the next iteration according to their order
@@ -17,7 +17,7 @@ function simulate(intersections, streets, cars, carqueues, schedules, D, F)
         if length(car.streets) == 0
             continue
         end
-        nextstreet = popfirst!(car.streets)
+        nextstreet = popfirst!(car.streets) # TODO fix
         # where does that street end?
         finish = intersections[nextstreet.finish] # intersection
         # how long until we finish the road and join the queue?
@@ -79,7 +79,7 @@ function simulate(intersections, streets, cars, carqueues, schedules, D, F)
     local total_score = 0
 
     while (current_time <= D) & (length(eventQ) > 0)
-        println("Start of loop: At time $(current_time) the event queue has $(length(eventQ)) events left")
+        # println("Start of loop: At time $(current_time) the event queue has $(length(eventQ)) events left")
         # get next event
         event = dequeue!(eventQ)
         current_time = event.time
@@ -92,7 +92,7 @@ function simulate(intersections, streets, cars, carqueues, schedules, D, F)
             # woohoo car has no more work to do, and can add to score!
             my_score = F + (D - current_time)
             total_score += my_score
-            println("Continuing")
+            # println("Continuing")
             continue
         end
 
@@ -148,7 +148,7 @@ function simulate(intersections, streets, cars, carqueues, schedules, D, F)
         #push car onto carqueue for next car to see
         enqueue!(cq.carqueue, (next_event_time, car))
         enqueue!(eventQ, event, next_event_time)
-        println("At time $(current_time) the event queue has $(length(eventQ)) events left")
+        # println("At time $(current_time) the event queue has $(length(eventQ)) events left")
     end
     return total_score, current_time
 end

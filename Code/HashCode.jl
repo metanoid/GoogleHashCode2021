@@ -31,8 +31,8 @@ for dur in 3:8
 
         problem = problems[i]
         inputfile = inputfiles[i]
-        intersections, streets, cars, carqueues, D, I, S, V, F = parse_input(inputfile)
-        schedules = dumbstart(intersections, streets, cars, queues, dur)
+        prob = parse_input(inputfile);
+        schedules = dumbstart(intersections, streets, cars, carqueues, dur)
         score, endtime = simulate(intersections, streets, cars, carqueues, schedules, D, F)
 
         write_output(schedules, "$(problem)_dumb_$(dur)")
